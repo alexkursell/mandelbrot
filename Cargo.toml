@@ -4,6 +4,6 @@ version = "0.1.0"
 authors = ["Alex Kursell <alexkursell@gmail.com>"]
 
 [dependencies]
-rayon = "*"
-image = "*"
-clap = "*"
+rayon = "^0.9.0"
+image = "^0.18.0"
+clap = "^2.0"
