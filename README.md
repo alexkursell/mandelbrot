@@ -22,7 +22,7 @@ Note the ```--``` in the examples below. It prevents negative numbers from being
 
 Produces an image of the whole set:
 
-![Image](../examples/set.png?raw=true)
+![Image](https://raw.githubusercontent.com/alexkursell/mandelbrot/master/examples/set.png)
 
 ---
 
@@ -30,5 +30,5 @@ Produces an image of the whole set:
 
 Produces my desktop wallpaper :-)
 
-![Image](../examples/img.png?raw=true)
+![Image](https://raw.githubusercontent.com/alexkursell/mandelbrot/master/examples/img.png)
   
