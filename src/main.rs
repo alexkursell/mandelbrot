@@ -10,13 +10,11 @@ use clap::App;
 
 #[derive(Debug, Copy, Clone, Default)]
 struct Complex{
-    re : f32, //Real part
-    im : f32  //Complex part
+    re : f32,
+    im : f32 
 }
 
 
-//Since the core iteration is z = z * z + c,
-//addition and multiplication must be defined
 impl Add for Complex{
     type Output = Complex;
     fn add(self, other : Complex) -> Self::Output{
@@ -51,14 +49,14 @@ impl MandelView{
         let ydelta : f32 = (topleft.im - botright.im) as f32 / yres as f32;
 
         MandelView{
-            topleft  : topleft + Complex{re : 0.0, im : xdelta * -1.0},
-            xdelta   : xdelta,
-            ydelta   : ydelta,
-            cur      : topleft.clone(),
-            xres     : xres,
-            yres     : yres,
-            curx     : 0,
-            cury     : 0
+            topleft : topleft + Complex{re : 0.0, im : xdelta * -1.0},
+            cur     : topleft,
+            curx    : 0,
+            cury    : 0,
+            xdelta,
+            ydelta,
+            xres,
+            yres
         }
 
     }
@@ -68,7 +66,7 @@ impl Iterator for MandelView{
     type Item = Complex;
     fn next(&mut self) -> Option<Complex>{
         if self.curx == self.xres{         //Reached end of line
-            if self.cury == self.yres{     //Reached end of file
+            if self.cury == self.yres{     //Reached end of view
                 return None
             }
 
@@ -86,38 +84,61 @@ impl Iterator for MandelView{
     }
 }
 
-
 fn mandel_iter(c : Complex) -> u8{
-    let mut z = Complex{re: 0.0, im : 0.0};  //Start iterating with z = (0, 0)
-    for n in 0..255{                         //255 maximum iterations (matches range of u8)
-        z = z * z + c;                       //Actual iteration.
-        if z.im * z.im + z.re * z.re >= 4.0{ //If |z| > 2, this is guaranteed to diverge
-            return 255 - n;                  //The faster the value "escapes", the lighter the colour
+    let mut z = Complex{re: 0.0, im : 0.0};  
+    for n in 0..255{
+        z = z * z + c;
+        //If |z| > 2, this is guaranteed to diverge
+        //The faster the value "escapes", the lighter the colour
+        if z.im * z.im + z.re * z.re >= 4.0{ 
+            return 255 - n;                  
         }
     }
-    0                                        //0 means it never escaped. Coloured black
+
+    //0 means it never escaped. Coloured black
+    0                                        
 }
 
-fn compute_image(m : MandelView) -> Vec<u8>{
-    let v : Vec<Complex> = m.collect(); //Put all of the generated points into a vector
-    v.par_iter()                        //Execute the map in parallel (using rayon)
-     .map(|c| mandel_iter(*c))          //Map each point in the vector to its mandelbrot value
-     .collect()                         //Return a vector of the brightness values
+fn compute_image(m : MandelView, color : bool) -> Vec<u8>{
+    let v : Vec<Complex> = m.collect();
+    let raw = v.par_iter()
+     .map(|c| mandel_iter(*c))          
+     .collect();             
+
+    if !color { return raw }
+
+    let mut col : Vec<u8> = Vec::with_capacity(raw.len() * 3);
+
+    //Quick and dirty conversion from grayscale to black+rainbow.
+    for v in raw{
+        let r = if v < 16 {v * 16} else {255 - (v - 16)};
+        let g = if v >= 128 {255 - (v - 128) * 2} else {v * 2};
+        let b = v;
+
+        col.push(r);
+        col.push(g);
+        col.push(b);
+    }
+
+    col
+
 }
 
 
 fn main() {
     let matches = App::new("Mandelbrot Visualizer")
-                          .version("0.1")
-                          .author("Alex Kursell <alexkursell@gmail.com>")
-                          .about("Quickly generates a grayscale view of the mandelbrot set.")
+                          .version(env!("CARGO_PKG_VERSION"))
+                          .author(env!("CARGO_PKG_AUTHORS"))
+                          .about(env!("CARGO_PKG_DESCRIPTION"))
                           .args_from_usage(
                              "<X-TOPLEFT>          'Sets the real component of the top left of the image'
                               <Y-TOPLEFT>          'Sets the imaginary component of the top left of the image'
                               <SCALE>              'Total width of the view'
                               <XRES>               'Horizontal resolution of the output image'
                               <YRES>               'Vertical resolution of the output image'
-                              <FILE>               'Name of the output file. Suffix should be .png'")
+                              <FILE>               'Name of the output file. Suffix should be .png'
+
+                              -c, --color           'Use 256 colors instead of grayscale.")
                           .get_matches();
 
 
@@ -125,6 +146,12 @@ fn main() {
     let path = Path::new(matches.value_of("FILE").unwrap());
     let file = File::create(&path).unwrap();
     let i = image::png::PNGEncoder::new(file);
+
+    let color = matches.is_present("color");
+    let image_type = match color{
+        false => image::ColorType::Gray(8),
+        true => image::ColorType::RGB(8)
+    };
 
     //Set up resolution.
     let xres = matches.value_of("XRES").unwrap().parse::<u32>().unwrap();
@@ -152,6 +179,6 @@ fn main() {
     let m = MandelView::new(tleft, bright, xres, yres);
 
     //Compute the actual image and write to file.
-    i.encode(compute_image(m).as_slice(), xres, yres, image::ColorType::Gray(8));
+    let _ = i.encode(compute_image(m, color).as_slice(), xres, yres, image_type);
 
 }

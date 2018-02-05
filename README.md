@@ -1,5 +1,5 @@
 # mandelbrot
-Command line tool to generate grayscale mandelbrot visualizations. Written in Rust.
+Command line tool to generate grayscale or colour mandelbrot visualizations. Written in Rust.
 
 ## Usage
 mandelbrot requires 6 arguments:
@@ -14,7 +14,9 @@ mandelbrot requires 6 arguments:
     
 Do not run with ```cargo run```, as negative numbers will be interpreted as flags and the program will not run. 
 Instead, run ```cargo build --release```, cd to ```/target/release/``` and use the ```mandelbrot``` executable directly.
-Note the ```--``` in the examples below. It prevents negative numbers from being interpreted as flags.
+Note the ```--``` in the examples below.
+
+Add the ```--color``` or ```-c``` flag before the argument list to generate the same image but in colour.
 
 ## Examples
 
@@ -31,4 +33,12 @@ Produces an image of the whole set:
 Produces my desktop wallpaper :-)
 
 ![Image](https://raw.githubusercontent.com/alexkursell/mandelbrot/master/examples/img.png)
+
+---
+
+```./mandelbrot --color -- -0.66 0.4508 0.015 1920 1080 coloured.png```
+
+Produces my desktop wallpaper in colour.
+
+![Image](https://raw.githubusercontent.com/alexkursell/mandelbrot/master/examples/coloured.png)
   

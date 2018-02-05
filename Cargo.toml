@@ -1,7 +1,8 @@
 [package]
 name = "mandelbrot"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Alex Kursell <alexkursell@gmail.com>"]
+description = "Quickly generates a grayscale or colour view of the mandelbrot set."
 
 [dependencies]
 rayon = "^0.9.0"
